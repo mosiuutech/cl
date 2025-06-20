@@ -55,7 +55,7 @@
       }
 
       .sidebar-footer {
-        margin-top: auto; /* to wypchnie stopkę na dół */
+        margin-top: auto; 
         padding: 10px 0;
         font-size: 12px;
         color: #aaa;
@@ -216,7 +216,7 @@
 </label>
 
           <h2>📋 Wyniki:</h2>
-          <div id="results">
+          
           <div style="margin: 15px 0">
   <strong style="display: block; margin-bottom: 6px;">Filtruj:</strong>
   <div style="display: flex; gap: 8px; flex-wrap: wrap;">
@@ -224,8 +224,8 @@
     <button data-filter="new" class="filter-btn styled-filter-btn">Nowi</button>
     <button data-filter="existing" class="filter-btn styled-filter-btn">Zapisani</button>
   </div>
-</div></div>
-
+</div>
+        <div id="results">
         </div>
 
         <!-- CONTACTS -->
@@ -384,20 +384,17 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
     <script>
-      // Funkcja przełączania widoku stron
       function showPage(id) {
         ["home", "contacts", "guide"].forEach((pg) => {
           document.getElementById("page-" + pg).classList.add("hidden");
         });
         document.getElementById("page-" + id).classList.remove("hidden");
 
-        // Aktywacja przycisku w sidebarze
         document.querySelectorAll(".menu-button").forEach((btn) => {
           btn.classList.toggle("active", btn.getAttribute("data-page") === id);
         });
       }
 
-      // Nasłuchiwanie kliknięć na przyciski sidebaru
       document.querySelectorAll(".menu-button").forEach((btn) => {
         btn.addEventListener("click", () => {
           const page = btn.getAttribute("data-page");
@@ -405,7 +402,6 @@
         });
       });
 
-      // Domyślnie pokazujemy stronę główną
       window.addEventListener("load", () => showPage("home"));
 
       const STORAGE_CONTACTS_KEY = "savedImportedNumbers";
@@ -497,8 +493,6 @@
   } else {
     saveInfoDiv.textContent = "Brak zapisanych kontaktów.";
   }
-
-  // Dodatkowa informacja o aktualnym załadowaniu pliku VCF
   const info = document.createElement("div");
   info.style.marginTop = "8px";
   info.style.fontWeight = "bold";
@@ -575,7 +569,6 @@ END:VCARD`;
   const filter = window.currentFilter || "all";
   resultsDiv.innerHTML = "";
 
-  // Dodajemy info o synchronizacji
   const syncInfo = document.createElement("div");
   syncInfo.style.padding = "10px";
   syncInfo.style.marginBottom = "15px";
@@ -687,9 +680,8 @@ END:VCARD`;
           btn.classList.add("active");
           displayContacts();
         });
-      });
-
-      // Ustaw domyślny filtr "all"
+      }); 
+      
       window.addEventListener("load", () => {
         window.currentFilter = "all";
         document.querySelector('[data-filter="all"]').classList.add("active");
