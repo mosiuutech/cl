@@ -622,11 +622,17 @@ body.dark-mode #page-guide .alert {
           let match;
           parsedPDFContacts = [];
 
-          while ((match = regex.exec(fullText)) !== null) {
-            const name = match[1];
-            const phone = normalize(`${match[2]}${match[3]}${match[4]}`);
-            parsedPDFContacts.push({ name, phone });
-          }
+          let index = 0;
+while ((match = regex.exec(fullText)) !== null) {
+  const name = match[1];
+  const phone = normalize(`${match[2]}${match[3]}${match[4]}`);
+  let role = "worker";
+  if (index === 0) role = "guardian";
+  else if (index === 1) role = "client";
+  else if (index === 2) role = "crewboss";
+  parsedPDFContacts.push({ name, phone, role });
+  index++;
+}
 
           if (parsedPDFContacts.length === 0) {
             resultsDiv.innerHTML = "<p>Nie znaleziono kontaktów w PDF.</p>";
