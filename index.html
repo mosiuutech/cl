@@ -661,28 +661,62 @@ END:VCARD`;
         return { url, filename: `${contact.name}.vcf` };
       }
 
-      function displayContacts() {
+  function displayContacts() {
   const filter = window.currentFilter || "all";
   resultsDiv.innerHTML = "";
 
-  // Dodajemy info o synchronizacji
-  const syncInfo = document.createElement("div");
-  syncInfo.style.padding = "10px";
-  syncInfo.style.marginBottom = "15px";
-  syncInfo.style.borderRadius = "6px";
-  syncInfo.style.fontWeight = "bold";
-  syncInfo.style.color = importedPhoneNumbers.length > 0 ? "#155724" : "#721c24";
-  syncInfo.style.backgroundColor = importedPhoneNumbers.length > 0 ? "#d4edda" : "#f8d7da";
-  syncInfo.textContent = importedPhoneNumbers.length > 0
-    ? "✅ Lista jest zsynchronizowana z kontaktami."
-    : "⚠️ Lista nie jest zsynchronizowana z kontaktami.";
+  // Pokaż filtry i wyniki po załadowaniu PDF
+  document.getElementById("filtersSection").style.display = "block";
+  resultsDiv.style.display = "block";
 
-  resultsDiv.appendChild(syncInfo);
+  const guardian = parsedPDFContacts.find(p => p.role === "guardian");
+  const client = parsedPDFContacts.find(p => p.role === "client");
+  const crewboss = parsedPDFContacts.find(p => p.role === "crewboss");
+  const workers = parsedPDFContacts.filter(p => p.role === "worker");
 
   newContacts = [];
   let anyVisible = false;
 
-  parsedPDFContacts.forEach(({ name, phone }) => {
+  // OPERATOR / KLIENT
+  const topRow = document.createElement("div");
+  topRow.style.display = "flex";
+  topRow.style.justifyContent = "space-between";
+  topRow.style.gap = "20px";
+
+  function createContactCard({ name, phone }, label) {
+    const div = document.createElement("div");
+    div.style.flex = "1";
+    div.innerHTML = `
+      <h3>${label}</h3>
+      <p><strong>${name}</strong><br>📞 ${phone}</p>
+    `;
+    return div;
+  }
+
+  if (guardian && client) {
+    topRow.appendChild(createContactCard(guardian, "🧑‍💼 Opiekun"));
+    topRow.appendChild(createContactCard(client, "👤 Klient"));
+    resultsDiv.appendChild(topRow);
+  }
+
+  // CREWBOSS
+  if (crewboss) {
+    const bossDiv = document.createElement("div");
+    bossDiv.innerHTML = `
+      <h3>👷 Crew Boss (Ty)</h3>
+      <p><strong>${crewboss.name}</strong><br>📞 ${crewboss.phone}</p>
+      <hr>
+    `;
+    bossDiv.style.marginTop = "20px";
+    resultsDiv.appendChild(bossDiv);
+  }
+
+  // PRACOWNICY
+  const workersHeader = document.createElement("h3");
+  workersHeader.textContent = "👥 Pracownicy";
+  resultsDiv.appendChild(workersHeader);
+
+  workers.forEach(({ name, phone }) => {
     const exists = importedPhoneNumbers.includes(phone);
     const isVisible =
       filter === "all" ||
@@ -713,12 +747,6 @@ END:VCARD`;
     const link = container.querySelector(".download-link");
     if (link) {
       link.addEventListener("click", (e) => {
-        if (e.metaKey || e.ctrlKey) {
-          e.preventDefault();
-          showToast("Użycie skrótu zablokowane dla bezpieczeństwa.", false);
-          return;
-        }
-
         e.preventDefault();
         const contact = {
           name: link.getAttribute("data-name"),
@@ -744,7 +772,7 @@ END:VCARD`;
     resultsDiv.appendChild(container);
   });
 
-  if (!anyVisible) {
+  if (!anyVisible && workers.length > 0) {
     const noResult = document.createElement("p");
     noResult.textContent = "Brak kontaktów do wyświetlenia dla wybranego filtra.";
     resultsDiv.appendChild(noResult);
