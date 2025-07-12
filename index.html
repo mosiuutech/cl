@@ -1,11 +1,6 @@
-<!DOCTYPE html>
-<html lang="pl">
-  <head>
-    <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, viewport-fit=cover"
-    />
+<html lang="pl"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
     <title>Lista obecności</title>
     <style>
@@ -298,11 +293,11 @@ body.dark-mode #page-guide .alert {
       <!-- Content area -->
       <div class="content">
         <!-- HOME -->
-        <div id="page-home">
+        <div id="page-home" class="">
          <h2>Wgraj PDF z obecnością</h2>
 <label style="display: inline-block; background: #1a73e8; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold;">
   📄 Wybierz plik PDF
-  <input type="file" id="pdfInput" accept="application/pdf" style="display: none;" />
+  <input type="file" id="pdfInput" accept="application/pdf" style="display: none;">
 </label>
 
           <h2>📋 Wyniki:</h2>
@@ -323,7 +318,7 @@ body.dark-mode #page-guide .alert {
           <h2>Importuj kontakty (.vcf z iPhone'a)</h2>
          <label style="display: inline-block; background: #1a73e8; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold;">
   📇 Wybierz plik VCF
-  <input type="file" id="vcfInput" accept=".vcf" style="display: none;" />
+  <input type="file" id="vcfInput" accept=".vcf" style="display: none;">
 </label>
 
          <div style="margin-top: 15px;">
@@ -331,7 +326,7 @@ body.dark-mode #page-guide .alert {
   <button id="clearContactsBtn" class="styled-action-btn" style="background: #e53935;">🗑 Wyczyść zapisane kontakty</button>
 </div>
 
-          <div id="saveInfo"></div>
+          <div id="saveInfo">Brak zapisanych kontaktów.<div style="margin-top: 8px; font-weight: bold; color: rgb(114, 28, 36); background-color: rgb(248, 215, 218); padding: 6px; border-radius: 6px;">⚠️ Plik z kontaktami nie jest załadowany.</div></div>
         </div>
 
         <!-- GUIDE -->
@@ -622,17 +617,11 @@ body.dark-mode #page-guide .alert {
           let match;
           parsedPDFContacts = [];
 
-          let index = 0;
-while ((match = regex.exec(fullText)) !== null) {
-  const name = match[1];
-  const phone = normalize(`${match[2]}${match[3]}${match[4]}`);
-  let role = "worker";
-  if (index === 0) role = "guardian";
-  else if (index === 1) role = "client";
-  else if (index === 2) role = "crewboss";
-  parsedPDFContacts.push({ name, phone, role });
-  index++;
-}
+          while ((match = regex.exec(fullText)) !== null) {
+            const name = match[1];
+            const phone = normalize(`${match[2]}${match[3]}${match[4]}`);
+            parsedPDFContacts.push({ name, phone });
+          }
 
           if (parsedPDFContacts.length === 0) {
             resultsDiv.innerHTML = "<p>Nie znaleziono kontaktów w PDF.</p>";
@@ -667,62 +656,28 @@ END:VCARD`;
         return { url, filename: `${contact.name}.vcf` };
       }
 
-  function displayContacts() {
+      function displayContacts() {
   const filter = window.currentFilter || "all";
   resultsDiv.innerHTML = "";
 
-  // Pokaż filtry i wyniki po załadowaniu PDF
-  document.getElementById("filtersSection").style.display = "block";
-  resultsDiv.style.display = "block";
+  // Dodajemy info o synchronizacji
+  const syncInfo = document.createElement("div");
+  syncInfo.style.padding = "10px";
+  syncInfo.style.marginBottom = "15px";
+  syncInfo.style.borderRadius = "6px";
+  syncInfo.style.fontWeight = "bold";
+  syncInfo.style.color = importedPhoneNumbers.length > 0 ? "#155724" : "#721c24";
+  syncInfo.style.backgroundColor = importedPhoneNumbers.length > 0 ? "#d4edda" : "#f8d7da";
+  syncInfo.textContent = importedPhoneNumbers.length > 0
+    ? "✅ Lista jest zsynchronizowana z kontaktami."
+    : "⚠️ Lista nie jest zsynchronizowana z kontaktami.";
 
-  const guardian = parsedPDFContacts.find(p => p.role === "guardian");
-  const client = parsedPDFContacts.find(p => p.role === "client");
-  const crewboss = parsedPDFContacts.find(p => p.role === "crewboss");
-  const workers = parsedPDFContacts.filter(p => p.role === "worker");
+  resultsDiv.appendChild(syncInfo);
 
   newContacts = [];
   let anyVisible = false;
 
-  // OPERATOR / KLIENT
-  const topRow = document.createElement("div");
-  topRow.style.display = "flex";
-  topRow.style.justifyContent = "space-between";
-  topRow.style.gap = "20px";
-
-  function createContactCard({ name, phone }, label) {
-    const div = document.createElement("div");
-    div.style.flex = "1";
-    div.innerHTML = `
-      <h3>${label}</h3>
-      <p><strong>${name}</strong><br>📞 ${phone}</p>
-    `;
-    return div;
-  }
-
-  if (guardian && client) {
-    topRow.appendChild(createContactCard(guardian, "🧑‍💼 Opiekun"));
-    topRow.appendChild(createContactCard(client, "👤 Klient"));
-    resultsDiv.appendChild(topRow);
-  }
-
-  // CREWBOSS
-  if (crewboss) {
-    const bossDiv = document.createElement("div");
-    bossDiv.innerHTML = `
-      <h3>👷 Crew Boss (Ty)</h3>
-      <p><strong>${crewboss.name}</strong><br>📞 ${crewboss.phone}</p>
-      <hr>
-    `;
-    bossDiv.style.marginTop = "20px";
-    resultsDiv.appendChild(bossDiv);
-  }
-
-  // PRACOWNICY
-  const workersHeader = document.createElement("h3");
-  workersHeader.textContent = "👥 Pracownicy";
-  resultsDiv.appendChild(workersHeader);
-
-  workers.forEach(({ name, phone }) => {
+  parsedPDFContacts.forEach(({ name, phone }) => {
     const exists = importedPhoneNumbers.includes(phone);
     const isVisible =
       filter === "all" ||
@@ -753,6 +708,12 @@ END:VCARD`;
     const link = container.querySelector(".download-link");
     if (link) {
       link.addEventListener("click", (e) => {
+        if (e.metaKey || e.ctrlKey) {
+          e.preventDefault();
+          showToast("Użycie skrótu zablokowane dla bezpieczeństwa.", false);
+          return;
+        }
+
         e.preventDefault();
         const contact = {
           name: link.getAttribute("data-name"),
@@ -778,7 +739,7 @@ END:VCARD`;
     resultsDiv.appendChild(container);
   });
 
-  if (!anyVisible && workers.length > 0) {
+  if (!anyVisible) {
     const noResult = document.createElement("p");
     noResult.textContent = "Brak kontaktów do wyświetlenia dla wybranego filtra.";
     resultsDiv.appendChild(noResult);
@@ -847,5 +808,6 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
     </script>
-  </body>
-</html>
+  
+
+</div></div></body></html>
