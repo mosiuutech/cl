@@ -659,44 +659,46 @@ body.dark-mode .role-crew {
 
     parsedPDFContacts = [];
 
-    // Supervisor (Opiekun)
+    // === Supervisor ===
     const supMatch = fullText.match(/Opiekun\s+([A-ZŁŚŹŻĆŃa-ząćęłńóśźż ]+)\s+\+?48[\s-]?(\d{3})[\s-]?(\d{3})[\s-]?(\d{3})/);
     if (supMatch) {
       parsedPDFContacts.push({
-        name: `[Supervisor] ${supMatch[1].trim()}`,
+        name: supMatch[1].trim(),
         phone: normalize(`${supMatch[2]}${supMatch[3]}${supMatch[4]}`),
         role: "supervisor"
       });
     }
 
-    // Client
+    // === Client ===
     const clientMatch = fullText.match(/Kontakt do klienta\s+([A-ZŁŚŹŻĆŃa-ząćęłńóśźż]+)\s+\+?48[\s-]?(\d{3})[\s-]?(\d{3})[\s-]?(\d{3})/);
     if (clientMatch) {
       parsedPDFContacts.push({
-        name: `[Klient] ${clientMatch[1].trim()}`,
+        name: clientMatch[1].trim(),
         phone: normalize(`${clientMatch[2]}${clientMatch[3]}${clientMatch[4]}`),
         role: "client"
       });
     }
 
-    // Crewboss (czyli Ty – do pominięcia)
+    // === Crewboss === (pomijany)
     const crewbossMatch = fullText.match(/Stagehand - Crewboss.*?([A-ZŁŚŹŻĆŃa-ząćęłńóśźż]+ [A-ZŁŚŹŻĆŃa-ząćęłńóśźż]+)\s+\+48\s*(\d{3})\s*(\d{3})\s*(\d{3})/);
     let crewbossPhone = null;
     if (crewbossMatch) {
       crewbossPhone = normalize(`${crewbossMatch[2]}${crewbossMatch[3]}${crewbossMatch[4]}`);
     }
 
-    // Crew – wszystkie imię + nazwisko + numer
+    // === Crew === (wszyscy członkowie personelu)
     const allMatches = [...fullText.matchAll(/([A-ZŁŚŹŻĆŃa-ząćęłńóśźż]+ [A-ZŁŚŹŻĆŃa-ząćęłńóśźż]+)\s*\+48\s*(\d{3})\s*(\d{3})\s*(\d{3})/g)];
+
     for (const match of allMatches) {
       const name = match[1].trim();
       const phone = normalize(`${match[2]}${match[3]}${match[4]}`);
-      // Pomijamy jeśli już jest supervisor, client albo crewboss
+
+      // Pomijamy supervisor, client i crewboss
       const alreadyAdded = parsedPDFContacts.some(p => p.phone === phone);
       if (!alreadyAdded && phone !== crewbossPhone) {
         parsedPDFContacts.push({
-          name: name,
-          phone: phone,
+          name,
+          phone,
           role: "crew"
         });
       }
