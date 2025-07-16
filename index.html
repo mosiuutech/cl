@@ -689,6 +689,7 @@ END:VCARD`;
         return { url, filename: `${contact.name}.vcf` };
       }
 
+
 function displayContacts() {
   const filter = window.currentFilter || "all";
   resultsDiv.innerHTML = "";
@@ -708,27 +709,57 @@ function displayContacts() {
   newContacts = [];
   let anyVisible = false;
 
-  const ordered = ["supervisor", "client", "crew"];
-  const sorted = ordered.flatMap(role =>
-    parsedPDFContacts.filter(p => p.role === role)
-  );
+  const groups = {
+    supervisor: [],
+    client: [],
+    crew: []
+  };
 
-  sorted.forEach(({ name, phone }) => {
-    const exists = importedPhoneNumbers.includes(phone);
-    const isVisible =
-      filter === "all" ||
-      (filter === "new" && !exists) ||
-      (filter === "existing" && exists);
+  // Grupowanie
+  parsedPDFContacts.forEach(contact => {
+    if (groups[contact.role]) {
+      groups[contact.role].push(contact);
+    }
+  });
 
-    if (!exists) newContacts.push({ name, phone });
-    if (!isVisible) return;
+  const roleConfig = {
+    supervisor: { label: "🧑‍💼 Supervisor", color: "#e3f2fd" },
+    client: { label: "🧑‍💻 Klient", color: "#fce4ec" },
+    crew: { label: "👷 Crew", color: "#e8f5e9" }
+  };
 
-    anyVisible = true;
+  ["supervisor", "client", "crew"].forEach(role => {
+    const people = groups[role];
+    if (!people.length) return;
 
-    const container = document.createElement("div");
-    container.innerHTML = `
-      <p>
-        <strong>${name}</strong> - ${phone}
+    const header = document.createElement("div");
+    header.textContent = roleConfig[role].label;
+    header.style.backgroundColor = roleConfig[role].color;
+    header.style.padding = "8px 12px";
+    header.style.marginTop = "20px";
+    header.style.fontWeight = "bold";
+    header.style.borderRadius = "6px";
+    resultsDiv.appendChild(header);
+
+    people.forEach(({ name, phone }) => {
+      const exists = importedPhoneNumbers.includes(phone);
+      const isVisible =
+        filter === "all" ||
+        (filter === "new" && !exists) ||
+        (filter === "existing" && exists);
+
+      if (!exists) newContacts.push({ name, phone });
+      if (!isVisible) return;
+
+      anyVisible = true;
+
+      const container = document.createElement("div");
+      container.style.padding = "8px 12px";
+      container.style.borderBottom = "1px solid #ccc";
+
+      container.innerHTML = `
+        <strong>${name}</strong><br>
+        ${phone}
         <span class="status ${exists ? "existing" : "new"}">
           ${exists ? "✅ Już w kontaktach" : "➕ Nowy kontakt"}
         </span>
@@ -737,40 +768,39 @@ function displayContacts() {
             ? `<a href="#" class="download-link" data-name="${name}" data-phone="${phone}">📥 vCard</a>`
             : ""
         }
-      </p>
-      <hr>
-    `;
+      `;
 
-    const link = container.querySelector(".download-link");
-    if (link) {
-      link.addEventListener("click", (e) => {
-        e.preventDefault();
-        const contact = {
-          name: link.getAttribute("data-name"),
-          phone: link.getAttribute("data-phone"),
-        };
-        const { url, filename } = generateDownloadLink(contact);
+      const link = container.querySelector(".download-link");
+      if (link) {
+        link.addEventListener("click", (e) => {
+          e.preventDefault();
+          const contact = {
+            name: link.getAttribute("data-name"),
+            phone: link.getAttribute("data-phone"),
+          };
+          const { url, filename } = generateDownloadLink(contact);
 
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
 
-        if (!importedPhoneNumbers.includes(contact.phone)) {
-          importedPhoneNumbers.push(contact.phone);
-          localStorage.setItem(STORAGE_CONTACTS_KEY, JSON.stringify(importedPhoneNumbers));
-          localStorage.setItem(STORAGE_SAVE_DATE_KEY, new Date().toISOString());
-          showToast(`Dodano ${contact.name} do zapisanych kontaktów`);
-        }
+          if (!importedPhoneNumbers.includes(contact.phone)) {
+            importedPhoneNumbers.push(contact.phone);
+            localStorage.setItem(STORAGE_CONTACTS_KEY, JSON.stringify(importedPhoneNumbers));
+            localStorage.setItem(STORAGE_SAVE_DATE_KEY, new Date().toISOString());
+            showToast(`Dodano ${contact.name} do zapisanych kontaktów`);
+          }
 
-        displayContacts();
-      });
-    }
+          displayContacts();
+        });
+      }
 
-    resultsDiv.appendChild(container);
+      resultsDiv.appendChild(container);
+    });
   });
 
   if (!anyVisible) {
@@ -779,6 +809,7 @@ function displayContacts() {
     resultsDiv.appendChild(noResult);
   }
 }
+        
 
       document.getElementById("pdfInput").addEventListener("change", (e) => {
         if (e.target.files.length) parsePDF(e.target.files[0]);
