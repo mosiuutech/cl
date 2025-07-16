@@ -694,6 +694,7 @@ function displayContacts() {
   const filter = window.currentFilter || "all";
   resultsDiv.innerHTML = "";
 
+  // Informacja o synchronizacji z kontaktami
   const syncInfo = document.createElement("div");
   syncInfo.style.padding = "10px";
   syncInfo.style.marginBottom = "15px";
@@ -715,7 +716,7 @@ function displayContacts() {
     crew: []
   };
 
-  // Grupowanie
+  // Grupowanie kontaktów wg ról
   parsedPDFContacts.forEach(contact => {
     if (groups[contact.role]) {
       groups[contact.role].push(contact);
@@ -723,24 +724,42 @@ function displayContacts() {
   });
 
   const roleConfig = {
-    supervisor: { label: "🧑‍💼 Supervisor", color: "#e3f2fd" },
-    client: { label: "🧑‍💻 Klient", color: "#fce4ec" },
-    crew: { label: "👷 Crew", color: "#e8f5e9" }
+    supervisor: {
+      label: "🧑‍💼 Supervisor",
+      background: "#e3f2fd",
+      border: "#bbdefb"
+    },
+    client: {
+      label: "🧑‍💻 Klient",
+      background: "#fce4ec",
+      border: "#f8bbd0"
+    },
+    crew: {
+      label: "👷 Crew",
+      background: "#e8f5e9",
+      border: "#c8e6c9"
+    }
   };
 
+  // Wyświetlanie kontaktów według ról
   ["supervisor", "client", "crew"].forEach(role => {
     const people = groups[role];
     if (!people.length) return;
 
-    const header = document.createElement("div");
-    header.textContent = roleConfig[role].label;
-    header.style.backgroundColor = roleConfig[role].color;
-    header.style.padding = "8px 12px";
-    header.style.marginTop = "20px";
-    header.style.fontWeight = "bold";
-    header.style.borderRadius = "6px";
-    resultsDiv.appendChild(header);
+    // Nagłówek sekcji
+    const sectionHeader = document.createElement("div");
+    sectionHeader.textContent = roleConfig[role].label;
+    sectionHeader.style.backgroundColor = roleConfig[role].background;
+    sectionHeader.style.borderLeft = `6px solid ${roleConfig[role].border}`;
+    sectionHeader.style.padding = "10px 12px";
+    sectionHeader.style.marginTop = "20px";
+    sectionHeader.style.marginBottom = "10px";
+    sectionHeader.style.fontWeight = "bold";
+    sectionHeader.style.fontSize = "16px";
+    sectionHeader.style.borderRadius = "4px";
+    resultsDiv.appendChild(sectionHeader);
 
+    // Lista kontaktów
     people.forEach(({ name, phone }) => {
       const exists = importedPhoneNumbers.includes(phone);
       const isVisible =
@@ -750,36 +769,43 @@ function displayContacts() {
 
       if (!exists) newContacts.push({ name, phone });
       if (!isVisible) return;
-
       anyVisible = true;
 
-      const container = document.createElement("div");
-      container.style.padding = "8px 12px";
-      container.style.borderBottom = "1px solid #ccc";
+      const contactDiv = document.createElement("div");
+      contactDiv.style.padding = "6px 12px";
+      contactDiv.style.borderBottom = "1px solid #ccc";
+      contactDiv.style.display = "flex";
+      contactDiv.style.flexDirection = "column";
+      contactDiv.style.gap = "4px";
 
-      container.innerHTML = `
-        <strong>${name}</strong><br>
-        ${phone}
-        <span class="status ${exists ? "existing" : "new"}">
-          ${exists ? "✅ Już w kontaktach" : "➕ Nowy kontakt"}
-        </span>
-        ${
-          !exists
-            ? `<a href="#" class="download-link" data-name="${name}" data-phone="${phone}">📥 vCard</a>`
-            : ""
-        }
-      `;
+      const nameLine = document.createElement("strong");
+      nameLine.textContent = name;
 
-      const link = container.querySelector(".download-link");
-      if (link) {
+      const phoneLine = document.createElement("div");
+      phoneLine.textContent = phone;
+
+      const statusSpan = document.createElement("span");
+      statusSpan.className = "status " + (exists ? "existing" : "new");
+      statusSpan.textContent = exists ? "✅ Już w kontaktach" : "➕ Nowy kontakt";
+
+      contactDiv.appendChild(nameLine);
+      contactDiv.appendChild(phoneLine);
+      contactDiv.appendChild(statusSpan);
+
+      if (!exists) {
+        const link = document.createElement("a");
+        link.href = "#";
+        link.className = "download-link";
+        link.dataset.name = name;
+        link.dataset.phone = phone;
+        link.textContent = "📥 vCard";
         link.addEventListener("click", (e) => {
           e.preventDefault();
           const contact = {
-            name: link.getAttribute("data-name"),
-            phone: link.getAttribute("data-phone"),
+            name: link.dataset.name,
+            phone: link.dataset.phone,
           };
           const { url, filename } = generateDownloadLink(contact);
-
           const a = document.createElement("a");
           a.href = url;
           a.download = filename;
@@ -797,9 +823,10 @@ function displayContacts() {
 
           displayContacts();
         });
+        contactDiv.appendChild(link);
       }
 
-      resultsDiv.appendChild(container);
+      resultsDiv.appendChild(contactDiv);
     });
   });
 
