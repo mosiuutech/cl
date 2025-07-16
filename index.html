@@ -598,44 +598,75 @@ body.dark-mode #page-guide .alert {
   saveInfoDiv.appendChild(info);
 }
 
+async function parsePDF(file) {
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    let fullText = "";
 
-      async function parsePDF(file) {
-        try {
-          const arrayBuffer = await file.arrayBuffer();
-          const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-          let fullText = "";
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      const text = content.items.map((item) => item.str).join(" ");
+      fullText += text + "\n";
+    }
 
-          for (let i = 1; i <= pdf.numPages; i++) {
-            const page = await pdf.getPage(i);
-            const content = await page.getTextContent();
-            const text = content.items.map((item) => item.str).join(" ");
-            fullText += text + "\n";
-          }
+    parsedPDFContacts = [];
 
-          const regex =
-            /([A-ZŁŚŹŻĆŃa-ząćęłńóśźż]+ [A-ZŁŚŹŻĆŃa-ząćęłńóśźż]+)[\s:]*\+?48?\s*[-]?(\d{3})[- ]?(\d{3})[- ]?(\d{3})/g;
-          let match;
-          parsedPDFContacts = [];
+    // Supervisor
+    const supMatch = fullText.match(/Opiekun\s+([A-ZŁŚŹŻĆŃa-ząćęłńóśźż ]+)\s+\+?48[\s-]?(\d{3})[\s-]?(\d{3})[\s-]?(\d{3})/);
+    if (supMatch) {
+      parsedPDFContacts.push({
+        name: `[Supervisor] ${supMatch[1].trim()}`,
+        phone: normalize(`${supMatch[2]}${supMatch[3]}${supMatch[4]}`),
+        role: "supervisor"
+      });
+    }
 
-          while ((match = regex.exec(fullText)) !== null) {
-            const name = match[1];
-            const phone = normalize(`${match[2]}${match[3]}${match[4]}`);
-            parsedPDFContacts.push({ name, phone });
-          }
+    // Client
+    const clientMatch = fullText.match(/Kontakt do klienta\s+([A-ZŁŚŹŻĆŃa-ząćęłńóśźż]+)\s+\+?48[\s-]?(\d{3})[\s-]?(\d{3})[\s-]?(\d{3})/);
+    if (clientMatch) {
+      parsedPDFContacts.push({
+        name: `[Klient] ${clientMatch[1].trim()}`,
+        phone: normalize(`${clientMatch[2]}${clientMatch[3]}${clientMatch[4]}`),
+        role: "client"
+      });
+    }
 
-          if (parsedPDFContacts.length === 0) {
-            resultsDiv.innerHTML = "<p>Nie znaleziono kontaktów w PDF.</p>";
-            return;
-          }
+    // Crewboss (do pominięcia później)
+    const crewbossMatch = fullText.match(/Stagehand - Crewboss[\s\S]*?(\b[A-ZŁŚŹŻĆŃa-ząćęłńóśźż]+ [A-ZŁŚŹŻĆŃa-ząćęłńóśźż]+)\s+\+?48[\s-]?(\d{3})[\s-]?(\d{3})[\s-]?(\d{3})/);
+    let crewbossPhone = null;
+    if (crewbossMatch) {
+      crewbossPhone = normalize(`${crewbossMatch[2]}${crewbossMatch[3]}${crewbossMatch[4]}`);
+    }
 
-          displayContacts();
-        } catch (e) {
-          console.error(e);
-          resultsDiv.innerHTML = "<p>Błąd podczas przetwarzania PDF.</p>";
-        } finally {
-          document.getElementById("pdfInput").value = "";
-        }
+    // Crew
+    const crewRegex = /Stagehand - Członek personelu[\s\S]*?(\b[A-ZŁŚŹŻĆŃa-ząćęłńóśźż]+ [A-ZŁŚŹŻĆŃa-ząćęłńóśźż]+)\s+\+?48[\s-]?(\d{3})[\s-]?(\d{3})[\s-]?(\d{3})/g;
+    let match;
+    while ((match = crewRegex.exec(fullText)) !== null) {
+      const phone = normalize(`${match[2]}${match[3]}${match[4]}`);
+      if (phone !== crewbossPhone) {
+        parsedPDFContacts.push({
+          name: match[1].trim(),
+          phone,
+          role: "crew"
+        });
       }
+    }
+
+    if (parsedPDFContacts.length === 0) {
+      resultsDiv.innerHTML = "<p>Nie znaleziono kontaktów w PDF.</p>";
+      return;
+    }
+
+    displayContacts();
+  } catch (e) {
+    console.error(e);
+    resultsDiv.innerHTML = "<p>Błąd podczas przetwarzania PDF.</p>";
+  } finally {
+    document.getElementById("pdfInput").value = "";
+  }
+}
 
       function createVCard({ name, phone }) {
         const parts = name.split(" ");
