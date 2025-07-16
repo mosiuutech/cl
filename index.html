@@ -793,17 +793,9 @@ function displayContacts() {
     if (!people.length) return;
 
     // Nagłówek sekcji
-    const sectionHeader = document.createElement("div");
+        const sectionHeader = document.createElement("div");
+    sectionHeader.className = `contact-role role-${role}`;
     sectionHeader.textContent = roleConfig[role].label;
-    sectionHeader.style.backgroundColor = roleConfig[role].background;
-    sectionHeader.style.borderLeft = `6px solid ${roleConfig[role].border}`;
-    sectionHeader.style.padding = "10px 12px";
-    sectionHeader.style.marginTop = "20px";
-    sectionHeader.style.marginBottom = "10px";
-    sectionHeader.style.fontWeight = "bold";
-    sectionHeader.style.fontSize = "16px";
-    sectionHeader.style.borderRadius = "4px";
-    resultsDiv.appendChild(sectionHeader);
 
     // Lista kontaktów
     people.forEach(({ name, phone }) => {
