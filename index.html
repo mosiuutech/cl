@@ -597,6 +597,7 @@ body.dark-mode #page-guide .alert {
 
   saveInfoDiv.appendChild(info);
 }
+
         async function parsePDF(file) {
   try {
     const arrayBuffer = await file.arrayBuffer();
@@ -612,7 +613,7 @@ body.dark-mode #page-guide .alert {
 
     parsedPDFContacts = [];
 
-    // Supervisor
+    // Supervisor (Opiekun)
     const supMatch = fullText.match(/Opiekun\s+([A-ZŁŚŹŻĆŃa-ząćęłńóśźż ]+)\s+\+?48[\s-]?(\d{3})[\s-]?(\d{3})[\s-]?(\d{3})/);
     if (supMatch) {
       parsedPDFContacts.push({
@@ -632,33 +633,28 @@ body.dark-mode #page-guide .alert {
       });
     }
 
-    // Crewboss
-    const crewbossRegex = /Stagehand - Crewboss[\s\S]*?(?:Członek personelu|Wypełniony przez|\d{2}:\d{2}).*?([A-ZŁŚŹŻĆŃa-ząćęłńóśźż]+ [A-ZŁŚŹŻĆŃa-ząćęłńóśźż]+)\s+\+?48[\s-]?(\d{3})[\s-]?(\d{3})[\s-]?(\d{3})/;
-    const crewbossMatch = fullText.match(crewbossRegex);
+    // Crewboss (czyli Ty – do pominięcia)
+    const crewbossMatch = fullText.match(/Stagehand - Crewboss.*?([A-ZŁŚŹŻĆŃa-ząćęłńóśźż]+ [A-ZŁŚŹŻĆŃa-ząćęłńóśźż]+)\s+\+48\s*(\d{3})\s*(\d{3})\s*(\d{3})/);
     let crewbossPhone = null;
     if (crewbossMatch) {
       crewbossPhone = normalize(`${crewbossMatch[2]}${crewbossMatch[3]}${crewbossMatch[4]}`);
     }
 
-    // Crew: zbieramy wszystkie wystąpienia sekcji "Członek personelu"
-    const crewSectionRegex = /Stagehand - Członek personelu[\s\S]+?ID stanowiska: [A-Z0-9]+\s+Członek personelu\s+Czas przybycia[\s\S]+?(?=(?:Stagehand -|Wypełniony przez|$))/g;
-    const crewSections = fullText.match(crewSectionRegex) || [];
-
-    crewSections.forEach(section => {
-      const personRegex = /([A-ZŁŚŹŻĆŃa-ząćęłńóśźż]+ [A-ZŁŚŹŻĆŃa-ząćęłńóśźż]+)\s+\+?48[\s-]?(\d{3})[\s-]?(\d{3})[\s-]?(\d{3})/g;
-      let match;
-      while ((match = personRegex.exec(section)) !== null) {
-        const name = match[1].trim();
-        const phone = normalize(`${match[2]}${match[3]}${match[4]}`);
-        if (phone !== crewbossPhone) {
-          parsedPDFContacts.push({
-            name,
-            phone,
-            role: "crew"
-          });
-        }
+    // Crew – wszystkie imię + nazwisko + numer
+    const allMatches = [...fullText.matchAll(/([A-ZŁŚŹŻĆŃa-ząćęłńóśźż]+ [A-ZŁŚŹŻĆŃa-ząćęłńóśźż]+)\s*\+48\s*(\d{3})\s*(\d{3})\s*(\d{3})/g)];
+    for (const match of allMatches) {
+      const name = match[1].trim();
+      const phone = normalize(`${match[2]}${match[3]}${match[4]}`);
+      // Pomijamy jeśli już jest supervisor, client albo crewboss
+      const alreadyAdded = parsedPDFContacts.some(p => p.phone === phone);
+      if (!alreadyAdded && phone !== crewbossPhone) {
+        parsedPDFContacts.push({
+          name: name,
+          phone: phone,
+          role: "crew"
+        });
       }
-    });
+    }
 
     if (parsedPDFContacts.length === 0) {
       resultsDiv.innerHTML = "<p>Nie znaleziono kontaktów w PDF.</p>";
