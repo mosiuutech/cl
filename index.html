@@ -656,28 +656,28 @@ END:VCARD`;
         return { url, filename: `${contact.name}.vcf` };
       }
 
-      function displayContacts() {
+   function displayContacts() {
   const filter = window.currentFilter || "all";
   resultsDiv.innerHTML = "";
-
-  // Dodajemy info o synchronizacji
-  const syncInfo = document.createElement("div");
-  syncInfo.style.padding = "10px";
-  syncInfo.style.marginBottom = "15px";
-  syncInfo.style.borderRadius = "6px";
-  syncInfo.style.fontWeight = "bold";
-  syncInfo.style.color = importedPhoneNumbers.length > 0 ? "#155724" : "#721c24";
-  syncInfo.style.backgroundColor = importedPhoneNumbers.length > 0 ? "#d4edda" : "#f8d7da";
-  syncInfo.textContent = importedPhoneNumbers.length > 0
-    ? "✅ Lista jest zsynchronizowana z kontaktami."
-    : "⚠️ Lista nie jest zsynchronizowana z kontaktami.";
-
-  resultsDiv.appendChild(syncInfo);
-
   newContacts = [];
   let anyVisible = false;
 
-  parsedPDFContacts.forEach(({ name, phone }) => {
+  // Ręczne przypisanie ról na podstawie nazw
+  const supervisor = parsedPDFContacts.find(c => c.name.includes("Bartosz Piątek"));
+  const client = parsedPDFContacts.find(c => c.name === "Mateusz"); // Imię tylko
+  const crewboss = parsedPDFContacts.find(c => c.name.includes("Dawid Moś")); // Pomijamy
+  const crew = parsedPDFContacts.filter(
+    c => ![supervisor?.phone, client?.phone, crewboss?.phone].includes(c.phone)
+  );
+
+  // Stwórz listę kontaktów w żądanej kolejności
+  const orderedContacts = [
+    supervisor,
+    client,
+    ...crew
+  ].filter(Boolean); // usuwa undefined, np. gdyby klienta nie znaleziono
+
+  orderedContacts.forEach(({ name, phone }) => {
     const exists = importedPhoneNumbers.includes(phone);
     const isVisible =
       filter === "all" ||
@@ -708,19 +708,12 @@ END:VCARD`;
     const link = container.querySelector(".download-link");
     if (link) {
       link.addEventListener("click", (e) => {
-        if (e.metaKey || e.ctrlKey) {
-          e.preventDefault();
-          showToast("Użycie skrótu zablokowane dla bezpieczeństwa.", false);
-          return;
-        }
-
         e.preventDefault();
         const contact = {
           name: link.getAttribute("data-name"),
           phone: link.getAttribute("data-phone"),
         };
         const { url, filename } = generateDownloadLink(contact);
-
         const a = document.createElement("a");
         a.href = url;
         a.download = filename;
@@ -729,9 +722,16 @@ END:VCARD`;
         a.remove();
         URL.revokeObjectURL(url);
 
-        importedPhoneNumbers.push(contact.phone);
-        localStorage.setItem(STORAGE_CONTACTS_KEY, JSON.stringify(importedPhoneNumbers));
-        showToast(`Kontakt ${contact.name} został dodany do zapisanych.`);
+        if (!importedPhoneNumbers.includes(contact.phone)) {
+          importedPhoneNumbers.push(contact.phone);
+          localStorage.setItem(
+            STORAGE_CONTACTS_KEY,
+            JSON.stringify(importedPhoneNumbers)
+          );
+          localStorage.setItem(STORAGE_SAVE_DATE_KEY, new Date().toISOString());
+          showToast(`Dodano ${contact.name} do zapisanych kontaktów`);
+        }
+
         displayContacts();
       });
     }
@@ -740,9 +740,8 @@ END:VCARD`;
   });
 
   if (!anyVisible) {
-    const noResult = document.createElement("p");
-    noResult.textContent = "Brak kontaktów do wyświetlenia dla wybranego filtra.";
-    resultsDiv.appendChild(noResult);
+    resultsDiv.innerHTML =
+      "<p>Brak kontaktów do wyświetlenia dla wybranego filtra.</p>";
   }
 }
 
