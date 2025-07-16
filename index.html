@@ -740,7 +740,7 @@ function displayContacts() {
   const filter = window.currentFilter || "all";
   resultsDiv.innerHTML = "";
 
-  // Informacja o synchronizacji z kontaktami
+  // Info o synchronizacji z kontaktami
   const syncInfo = document.createElement("div");
   syncInfo.style.padding = "10px";
   syncInfo.style.marginBottom = "15px";
@@ -762,7 +762,7 @@ function displayContacts() {
     crew: []
   };
 
-  // Grupowanie kontaktów wg ról
+  // Grupowanie kontaktów wg roli
   parsedPDFContacts.forEach(contact => {
     if (groups[contact.role]) {
       groups[contact.role].push(contact);
@@ -770,34 +770,21 @@ function displayContacts() {
   });
 
   const roleConfig = {
-    supervisor: {
-      label: "🧑‍💼 Supervisor",
-      background: "#e3f2fd",
-      border: "#bbdefb"
-    },
-    client: {
-      label: "🧑‍💻 Klient",
-      background: "#fce4ec",
-      border: "#f8bbd0"
-    },
-    crew: {
-      label: "👷 Crew",
-      background: "#e8f5e9",
-      border: "#c8e6c9"
-    }
+    supervisor: { label: "🧑‍💼 Supervisor" },
+    client: { label: "🧑‍💻 Klient" },
+    crew: { label: "👷 Crew" }
   };
 
-  // Wyświetlanie kontaktów według ról
+  // Przetwarzanie i wyświetlanie każdej grupy
   ["supervisor", "client", "crew"].forEach(role => {
     const people = groups[role];
     if (!people.length) return;
 
-    // Nagłówek sekcji
-        const sectionHeader = document.createElement("div");
+    const sectionHeader = document.createElement("div");
     sectionHeader.className = `contact-role role-${role}`;
     sectionHeader.textContent = roleConfig[role].label;
+    resultsDiv.appendChild(sectionHeader);
 
-    // Lista kontaktów
     people.forEach(({ name, phone }) => {
       const exists = importedPhoneNumbers.includes(phone);
       const isVisible =
