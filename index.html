@@ -735,7 +735,6 @@ END:VCARD`;
         return { url, filename: `${contact.name}.vcf` };
       }
 
-
 function displayContacts() {
   const filter = window.currentFilter || "all";
   resultsDiv.innerHTML = "";
@@ -762,7 +761,6 @@ function displayContacts() {
     crew: []
   };
 
-  // Grupowanie kontaktów wg roli
   parsedPDFContacts.forEach(contact => {
     if (groups[contact.role]) {
       groups[contact.role].push(contact);
@@ -775,7 +773,6 @@ function displayContacts() {
     crew: { label: "👷 Crew" }
   };
 
-  // Przetwarzanie i wyświetlanie każdej grupy
   ["supervisor", "client", "crew"].forEach(role => {
     const people = groups[role];
     if (!people.length) return;
@@ -800,22 +797,20 @@ function displayContacts() {
       contactDiv.style.padding = "6px 12px";
       contactDiv.style.borderBottom = "1px solid #ccc";
       contactDiv.style.display = "flex";
-      contactDiv.style.flexDirection = "column";
-      contactDiv.style.gap = "4px";
+      contactDiv.style.justifyContent = "space-between";
+      contactDiv.style.alignItems = "center";
 
-      const nameLine = document.createElement("strong");
+      const nameLine = document.createElement("span");
       nameLine.textContent = name;
+      nameLine.style.fontWeight = "bold";
 
-      const phoneLine = document.createElement("div");
-      phoneLine.textContent = phone;
+      const rightSide = document.createElement("span");
 
       const statusSpan = document.createElement("span");
       statusSpan.className = "status " + (exists ? "existing" : "new");
       statusSpan.textContent = exists ? "✅ Już w kontaktach" : "➕ Nowy kontakt";
 
-      contactDiv.appendChild(nameLine);
-      contactDiv.appendChild(phoneLine);
-      contactDiv.appendChild(statusSpan);
+      rightSide.appendChild(statusSpan);
 
       if (!exists) {
         const link = document.createElement("a");
@@ -824,6 +819,8 @@ function displayContacts() {
         link.dataset.name = name;
         link.dataset.phone = phone;
         link.textContent = "📥 vCard";
+        link.style.marginLeft = "8px";
+
         link.addEventListener("click", (e) => {
           e.preventDefault();
           const contact = {
@@ -848,9 +845,12 @@ function displayContacts() {
 
           displayContacts();
         });
-        contactDiv.appendChild(link);
+
+        rightSide.appendChild(link);
       }
 
+      contactDiv.appendChild(nameLine);
+      contactDiv.appendChild(rightSide);
       resultsDiv.appendChild(contactDiv);
     });
   });
@@ -861,6 +861,7 @@ function displayContacts() {
     resultsDiv.appendChild(noResult);
   }
 }
+
         
 
       document.getElementById("pdfInput").addEventListener("change", (e) => {
