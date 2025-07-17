@@ -579,9 +579,13 @@ body.dark-mode .role-crew {
             showToast("Nie znaleziono numerów w pliku VCF.", false);
             return;
           }
-          showToast(
-            `Zaimportowano ${importedPhoneNumbers.length} numerów z VCF.`
-          );
+          showToast(`Zaimportowano ${importedPhoneNumbers.length} numerów z VCF.`);
+displaySaveInfo();
+
+// Jeśli PDF był już wcześniej załadowany — odśwież kontakty
+if (parsedPDFContacts.length > 0) {
+  displayContacts();
+}
           displaySaveInfo();
         } catch (err) {
           console.error(err);
