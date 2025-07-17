@@ -742,9 +742,11 @@ END:VCARD`;
       }
 
 function displayContacts() {
-    document.getElementById("filterSection").style.display = "block";
   const filter = window.currentFilter || "all";
   resultsDiv.innerHTML = "";
+
+  // Pokazujemy filtry dopiero po załadowaniu wyników
+  document.getElementById("filterSection").style.display = "block";
 
   // Info o synchronizacji z kontaktami
   const syncInfo = document.createElement("div");
@@ -782,23 +784,29 @@ function displayContacts() {
 
   ["supervisor", "client", "crew"].forEach(role => {
     const people = groups[role];
-    if (!people.length) return;
 
+    // Tylko kontakty widoczne w ramach aktualnego filtra
+    const visiblePeople = people.filter(({ phone }) => {
+      const exists = importedPhoneNumbers.includes(phone);
+      return (
+        filter === "all" ||
+        (filter === "new" && !exists) ||
+        (filter === "existing" && exists)
+      );
+    });
+
+    // Pomijamy całą sekcję jeśli nie ma nic do pokazania
+    if (visiblePeople.length === 0) return;
+
+    // Nagłówek sekcji
     const sectionHeader = document.createElement("div");
     sectionHeader.className = `contact-role role-${role}`;
     sectionHeader.textContent = roleConfig[role].label;
     resultsDiv.appendChild(sectionHeader);
 
-    people.forEach(({ name, phone }) => {
+    visiblePeople.forEach(({ name, phone }) => {
       const exists = importedPhoneNumbers.includes(phone);
-      const isVisible =
-        filter === "all" ||
-        (filter === "new" && !exists) ||
-        (filter === "existing" && exists);
-
       if (!exists) newContacts.push({ name, phone });
-      if (!isVisible) return;
-      anyVisible = true;
 
       const contactDiv = document.createElement("div");
       contactDiv.style.padding = "6px 12px";
@@ -850,7 +858,7 @@ function displayContacts() {
             showToast(`Dodano ${contact.name} do zapisanych kontaktów`);
           }
 
-          displayContacts();
+          displayContacts(); // Odświeżenie widoku po zapisaniu
         });
 
         rightSide.appendChild(link);
@@ -860,6 +868,8 @@ function displayContacts() {
       contactDiv.appendChild(rightSide);
       resultsDiv.appendChild(contactDiv);
     });
+
+    anyVisible = true;
   });
 
   if (!anyVisible) {
@@ -868,7 +878,6 @@ function displayContacts() {
     resultsDiv.appendChild(noResult);
   }
 }
-
         
 
       document.getElementById("pdfInput").addEventListener("change", (e) => {
