@@ -576,15 +576,19 @@ body.dark-mode .role-crew {
       }
 
       function showToast(message, isSuccess = true) {
+  const toast = document.getElementById("toast");
+  if (!toast) return;
+
   toast.textContent = message;
   toast.style.backgroundColor = isSuccess ? "#4CAF50" : "#F44336";
 
+  // Trigger fade-in
   toast.classList.add("show");
 
-  // Usunięcie z klasą zaniku
+  // Fade-out po 3 sekundach
   setTimeout(() => {
     toast.classList.remove("show");
-  }, 1500);
+  }, 3000);
 }
       async function parseVCF(file) {
         try {
