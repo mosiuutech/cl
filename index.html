@@ -321,6 +321,25 @@ body.dark-mode .role-crew {
   border-color: #81c784;
   color: #e8f5e9;
 }
+        #toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #4CAF50;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 6px;
+  font-weight: bold;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+  z-index: 9999;
+}
+#toast.show {
+  opacity: 1;
+  pointer-events: auto;
+}
     </style>
   </head>
   <body>
@@ -557,14 +576,16 @@ body.dark-mode .role-crew {
       }
 
       function showToast(message, isSuccess = true) {
-        toast.textContent = message;
-        toast.style.backgroundColor = isSuccess ? "#4CAF50" : "#F44336";
-        toast.style.display = "block";
-        setTimeout(() => {
-          toast.style.display = "none";
-        }, 1200);
-      }
+  toast.textContent = message;
+  toast.style.backgroundColor = isSuccess ? "#4CAF50" : "#F44336";
 
+  toast.classList.add("show");
+
+  // Usunięcie z klasą zaniku
+  setTimeout(() => {
+    toast.classList.remove("show");
+  }, 1500);
+}
       async function parseVCF(file) {
         try {
           const text = await file.text();
