@@ -604,11 +604,15 @@ body.dark-mode .role-crew {
       }
 
       function loadContactsFromStorage() {
-        const saved = localStorage.getItem(STORAGE_CONTACTS_KEY);
-        if (saved) importedPhoneNumbers = JSON.parse(saved);
-        displaySaveInfo();
-      }
-
+  const saved = localStorage.getItem(STORAGE_CONTACTS_KEY);
+  if (saved) {
+    importedPhoneNumbers = JSON.parse(saved);
+    showToast(`Załadowano ${importedPhoneNumbers.length} kontaktów z pamięci.`);
+  } else {
+    showToast("Brak zapisanych kontaktów w pamięci.", false);
+  }
+  displaySaveInfo();
+}
       function clearContactsStorage() {
         localStorage.removeItem(STORAGE_CONTACTS_KEY);
         localStorage.removeItem(STORAGE_SAVE_DATE_KEY);
@@ -626,7 +630,7 @@ body.dark-mode .role-crew {
     const date = new Date(dateStr);
     saveInfoDiv.textContent = `Kontakty zapisane: ${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
   } else {
-    saveInfoDiv.textContent = "Brak zapisanych kontaktów.";
+    saveInfoDiv.textContent = "Nie zapisano żadnych kontaktów do pamięci urządzenia.";
   }
 
   // Dodatkowa informacja o aktualnym załadowaniu pliku VCF
@@ -638,8 +642,8 @@ body.dark-mode .role-crew {
   info.style.padding = "6px";
   info.style.borderRadius = "6px";
   info.textContent = importedPhoneNumbers.length > 0
-    ? `✅ Plik z kontaktami jest załadowany (${importedPhoneNumbers.length} numerów).`
-    : "⚠️ Plik z kontaktami nie jest załadowany.";
+  ? `✅ Plik z kontaktami został załadowany (${importedPhoneNumbers.length} numerów).`
+  : "⚠️ Nie załadowano pliku z kontaktami – wybierz plik VCF.";
 
   saveInfoDiv.appendChild(info);
 }
