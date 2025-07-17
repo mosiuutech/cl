@@ -576,20 +576,13 @@ body.dark-mode .role-crew {
       }
 
       function showToast(message, isSuccess = true) {
-  const toast = document.getElementById("toast");
-  if (!toast) return;
-
-  toast.textContent = message;
-  toast.style.backgroundColor = isSuccess ? "#4CAF50" : "#F44336";
-
-  // Trigger fade-in
-  toast.classList.add("show");
-
-  // Fade-out po 3 sekundach
-  setTimeout(() => {
-    toast.classList.remove("show");
-  }, 3000);
-}
+        toast.textContent = message;
+        toast.style.backgroundColor = isSuccess ? "#4CAF50" : "#F44336";
+        toast.style.display = "block";
+        setTimeout(() => {
+          toast.style.display = "none";
+        }, 3000);
+      }
       async function parseVCF(file) {
         try {
           const text = await file.text();
