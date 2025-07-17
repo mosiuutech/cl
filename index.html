@@ -321,6 +321,25 @@ body.dark-mode .role-crew {
   border-color: #81c784;
   color: #e8f5e9;
 }
+#toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #4CAF50;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 6px;
+  font-weight: bold;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+  z-index: 9999;
+}
+#toast.show {
+  opacity: 1;
+  pointer-events: auto;
+}
 
     </style>
   </head>
@@ -358,6 +377,7 @@ body.dark-mode .role-crew {
   </div>
 </div>
 <div id="results"></div>
+            <button onclick="showToast('To działa!', true)" style="margin-top: 20px;">🔔 Testuj toast</button>
 </div>
 
         <!-- CONTACTS -->
@@ -558,13 +578,18 @@ body.dark-mode .role-crew {
       }
 
       function showToast(message, isSuccess = true) {
-        toast.textContent = message;
-        toast.style.backgroundColor = isSuccess ? "#4CAF50" : "#F44336";
-        toast.style.display = "block";
-        setTimeout(() => {
-          toast.style.display = "none";
-        }, 3000);
-      }
+  const toast = document.getElementById("toast");
+  if (!toast) return;
+
+  toast.textContent = message;
+  toast.style.backgroundColor = isSuccess ? "#4CAF50" : "#F44336";
+
+  toast.classList.add("show");
+
+  setTimeout(() => {
+    toast.classList.remove("show");
+  }, 3000);
+}
       async function parseVCF(file) {
         try {
           const text = await file.text();
