@@ -738,6 +738,7 @@ END:VCARD`;
       }
 
 function displayContacts() {
+    document.getElementById("filterSection").style.display = "block";
   const filter = window.currentFilter || "all";
   resultsDiv.innerHTML = "";
 
